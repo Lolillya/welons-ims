@@ -3,12 +3,48 @@ import {
   ListOrdered,
   NotebookTabs,
   SquareKanban,
-  StretchHorizontal,
   Truck,
   Warehouse,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { links } from "@/routes/route-links";
 
 export const Sidebar = () => {
+  const navigate = useNavigate();
+
+  const SidebarItems = [
+    {
+      key: "dashboard",
+      link: links.DASHBOARD,
+      icon: <LayoutDashboard />,
+    },
+    {
+      key: "quotations",
+      link: links.QUOTATIONS,
+      icon: <NotebookTabs />,
+    },
+    {
+      key: "inventory",
+      link: links.INVENTORY,
+      icon: <Warehouse />,
+    },
+    {
+      key: "purchase_order",
+      link: links.PURCHASE_ORDERS,
+      icon: <ListOrdered />,
+    },
+    {
+      key: "projects",
+      link: links.PROJECTS,
+      icon: <SquareKanban />,
+    },
+    {
+      key: "dispatch",
+      link: links.DISPATCH,
+      icon: <Truck />,
+    },
+  ] as const;
+
   return (
     <section className="sidebar">
       <aside>
@@ -19,7 +55,13 @@ export const Sidebar = () => {
         <div className="flex flex-col sidebar-text">
           {/* <label>Invenetory</label> */}
           <ul>
-            <li>
+            {SidebarItems.map((s, i) => (
+              <li onClick={() => navigate(s.link)}>
+                {s.icon}
+                <span>{s.key}</span>
+              </li>
+            ))}
+            {/* <li>
               <LayoutDashboard />
               <span>Dashboard</span>
             </li>
@@ -42,7 +84,7 @@ export const Sidebar = () => {
             <li>
               <Truck />
               <span>Dispatch</span>
-            </li>
+            </li> */}
           </ul>
         </div>
       </aside>

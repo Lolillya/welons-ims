@@ -1,8 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
 import DefaultLayout from "../layouts/default-layout";
 import MainLayout from "../layouts/main-layout";
-import Dashboard from "../pages/admin/dashboard";
+import Dashboard from "../pages/admin/dashboard/dashboard";
 import QuotationsPage from "../pages/admin/quotations";
+import InventoryPage from "@/pages/admin/inventory";
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
           {
             path: "quotation/",
             element: <QuotationsPage />,
+          },
+          {
+            path: "inventory/",
+            element: <InventoryPage />,
           },
         ],
       },
