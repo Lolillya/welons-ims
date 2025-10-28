@@ -80,7 +80,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="flex items-baseline gap-3">
               <div className="text-3xl font-bold">{stats.inventory}</div>
-              <div className="text-sm ">Total SKUs</div>
+              <div className="text-sm ">Total Units</div>
             </div>
             <div className="mt-3 h-12">
               <ResponsiveContainer width="100%" height="100%">
@@ -190,7 +190,7 @@ const Dashboard = () => {
       </div>
 
       {/* Main trends chart */}
-      <div className="mt-6">
+      {/* <div className="mt-6">
         <Card className="w-full">
           <CardHeader>
             <CardTitle>30-day Trends</CardTitle>
@@ -206,7 +206,7 @@ const Dashboard = () => {
                 purchaseOrders: { label: "POs", color: "#7c3aed" },
                 dispatches: { label: "Dispatches", color: "#059669" },
               }}
-              className="h-[320px] w-full"
+              className="h-80 w-full"
             >
               <LineChart data={trendData}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -245,7 +245,7 @@ const Dashboard = () => {
             </ChartContainer>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
     </section>
   );
 };

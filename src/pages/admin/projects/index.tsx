@@ -30,8 +30,8 @@ type Project = {
   id: number;
   name: string;
   owner: string;
+  siteLocation?: string;
   status: "in-progress" | "complete" | "planned";
-  progress: number; // 0-100
   startDate: string;
 };
 
@@ -55,8 +55,8 @@ const ProjectsPage = () => {
           id: i + 1,
           name: `Project ${i + 1}`,
           owner: `Owner ${(i % 6) + 1}`,
+          siteLocation: ["Manila", "Cebu", "Davao"][i % 3],
           status,
-          progress: status === "complete" ? 100 : Math.max(5, (i * 7) % 100),
           startDate: date.toISOString().slice(0, 10),
         };
       }),
@@ -149,11 +149,11 @@ const ProjectsPage = () => {
         <Table className="rounded-lg">
           <TableHeader className="bg-[#DEE2E6]">
             <TableRow>
-              <TableHead>Project</TableHead>
-              <TableHead>Owner</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead>Start Date</TableHead>
+              <TableHead>Project Code</TableHead>
+              <TableHead>Client Name</TableHead>
+              <TableHead>Site Location</TableHead>
+              <TableHead>Project Status</TableHead>
+              <TableHead>Dispatch Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -161,6 +161,7 @@ const ProjectsPage = () => {
               <TableRow key={r.id}>
                 <TableCell>{r.name}</TableCell>
                 <TableCell>{r.owner}</TableCell>
+                <TableCell>{r.siteLocation}</TableCell>
                 <TableCell
                   className={
                     r.status === "complete"
@@ -172,7 +173,6 @@ const ProjectsPage = () => {
                 >
                   {r.status}
                 </TableCell>
-                <TableCell>{r.progress}%</TableCell>
                 <TableCell>{r.startDate}</TableCell>
               </TableRow>
             ))}

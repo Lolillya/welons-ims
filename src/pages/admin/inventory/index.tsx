@@ -24,6 +24,7 @@ import {
   PaginationLink,
   PaginationNext,
 } from "@/components/ui/pagination";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type InventoryRow = {
   id: number;
@@ -46,7 +47,7 @@ const InventoryPage = () => {
       );
       return {
         id: i + 1,
-        sku: `SKU-${1000 + i}`,
+        sku: `unit-${1000 + i}`,
         name: `Product ${i + 1}`,
         stock,
         reorderLevel: 8 + (i % 5),
@@ -119,20 +120,25 @@ const InventoryPage = () => {
       </div>
 
       <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div>
-            <label htmlFor="search" className="text-sm font-medium">
-              Search
-            </label>
-            <Input
-              id="search"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search SKU or product"
-            />
+        <div className="flex gap-5">
+          <Tabs>
+            <TabsList>
+              <TabsTrigger value="prefabs">Prefabs</TabsTrigger>
+              <TabsTrigger value="items">Items</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="flex items-center gap-3">
+            <div>
+              <Input
+                id="search"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search product"
+              />
+            </div>
           </div>
         </div>
         <div>
@@ -151,7 +157,7 @@ const InventoryPage = () => {
         <Table className="rounded-lg">
           <TableHeader className="bg-[#DEE2E6]">
             <TableRow>
-              <TableHead>SKU</TableHead>
+              <TableHead>Units</TableHead>
               <TableHead>Product</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Reorder Level</TableHead>

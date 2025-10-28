@@ -30,7 +30,14 @@ type Dispatch = {
   id: number;
   dispatchNo: string;
   orderRef: string;
+  // lifecycle status
   status: "approved" | "pending" | "cancelled";
+  // new fields
+  dispatchMode: "booking" | "pickup";
+  truckingService?: string;
+  unitStatus: "onhand" | "preorder";
+  // order-level status (dispatched / reserved)
+  orderStatus: "dispatched" | "reserved";
   carrier?: string;
   date: string;
 };
@@ -48,7 +55,18 @@ const DispatchPage = () => {
           "pending",
           "cancelled",
         ];
+        const orderStatuses: Dispatch["orderStatus"][] = [
+          "dispatched",
+          "reserved",
+        ];
+        const dispatchModes: Dispatch["dispatchMode"][] = ["booking", "pickup"];
+        const unitStatuses: Dispatch["unitStatus"][] = ["onhand", "preorder"];
+
         const status = statuses[i % statuses.length];
+        const orderStatus = orderStatuses[i % orderStatuses.length];
+        const dispatchMode = dispatchModes[i % dispatchModes.length];
+        const unitStatus = unitStatuses[i % unitStatuses.length];
+
         const d = new Date();
         d.setDate(d.getDate() - (i % 30));
         return {
@@ -56,6 +74,11 @@ const DispatchPage = () => {
           dispatchNo: `DISP-${3000 + i}`,
           orderRef: `ORD-${5000 + i}`,
           status,
+          dispatchMode,
+          truckingService:
+            status === "approved" ? ["J&T", "LBC", "DHL"][i % 3] : undefined,
+          unitStatus,
+          orderStatus,
           carrier:
             status === "approved" ? ["J&T", "LBC", "DHL"][i % 3] : undefined,
           date: d.toISOString().slice(0, 10),
@@ -163,9 +186,11 @@ const DispatchPage = () => {
           <TableHeader className="bg-[#DEE2E6]">
             <TableRow>
               <TableHead>Dispatch No</TableHead>
-              <TableHead>Order Ref</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Carrier</TableHead>
+              <TableHead>Quotation No.</TableHead>
+              <TableHead>Dispatch Mode</TableHead>
+              <TableHead>Trucking Service</TableHead>
+              <TableHead>Unit Status</TableHead>
+              <TableHead>Order Status</TableHead>
               <TableHead>Date</TableHead>
             </TableRow>
           </TableHeader>
@@ -174,18 +199,18 @@ const DispatchPage = () => {
               <TableRow key={r.id}>
                 <TableCell>{r.dispatchNo}</TableCell>
                 <TableCell>{r.orderRef}</TableCell>
+                <TableCell className="capitalize">{r.dispatchMode}</TableCell>
+                <TableCell>{r.truckingService || "-"}</TableCell>
+                <TableCell className="capitalize">{r.unitStatus}</TableCell>
                 <TableCell
                   className={
-                    r.status === "approved"
+                    r.orderStatus === "dispatched"
                       ? "text-green-600"
-                      : r.status === "pending"
-                      ? "text-amber-600"
-                      : "text-red-600"
+                      : "text-amber-600"
                   }
                 >
-                  {r.status}
+                  {r.orderStatus}
                 </TableCell>
-                <TableCell>{r.carrier || "-"}</TableCell>
                 <TableCell>{r.date}</TableCell>
               </TableRow>
             ))}

@@ -31,6 +31,7 @@ type PO = {
   poNumber: string;
   project: string;
   status: "in-progress" | "complete" | "draft";
+  paymentStatus: "paid" | "partial" | "unpaid";
   total: number;
   createdAt: string;
 };
@@ -44,14 +45,21 @@ const PurchaseOrderPage = () => {
     () =>
       Array.from({ length: 34 }).map((_, i) => {
         const statuses: PO["status"][] = ["in-progress", "complete", "draft"];
+        const payStatuses: PO["paymentStatus"][] = [
+          "paid",
+          "partial",
+          "unpaid",
+        ];
         const status = statuses[i % statuses.length];
+        const paymentStatus = payStatuses[i % payStatuses.length];
         const date = new Date();
         date.setDate(date.getDate() - (i % 30));
         return {
           id: i + 1,
-          poNumber: `PO-${2000 + i}`,
+          poNumber: `Quote No.-${2000 + i}`,
           project: `Project ${(i % 6) + 1}`,
           status,
+          paymentStatus,
           total: Math.round(500 + Math.random() * 5000),
           createdAt: date.toISOString().slice(0, 10),
         };
@@ -146,11 +154,12 @@ const PurchaseOrderPage = () => {
         <Table className="rounded-lg">
           <TableHeader className="bg-[#DEE2E6]">
             <TableRow>
-              <TableHead>PO Number</TableHead>
-              <TableHead>Project</TableHead>
+              <TableHead>Quote No.</TableHead>
+              <TableHead>Project Code</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Created</TableHead>
+              <TableHead>Payment Status</TableHead>
+              <TableHead>Quotation Amount</TableHead>
+              <TableHead>Date Approved</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -168,6 +177,17 @@ const PurchaseOrderPage = () => {
                   }
                 >
                   {r.status}
+                </TableCell>
+                <TableCell
+                  className={
+                    r.paymentStatus === "paid"
+                      ? "text-green-600"
+                      : r.paymentStatus === "partial"
+                      ? "text-amber-600"
+                      : "text-red-600"
+                  }
+                >
+                  {r.paymentStatus}
                 </TableCell>
                 <TableCell>₱{r.total.toLocaleString()}</TableCell>
                 <TableCell>{r.createdAt}</TableCell>
