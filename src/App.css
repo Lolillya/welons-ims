@@ -38,7 +38,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-header;
+    @apply font-header text-primary;
   }
 
   h1 {
@@ -77,7 +77,7 @@
   }
 
   .main-container {
-    @apply py-5 px-10 overflow-y-hidden flex flex-col gap-5;
+    @apply p-10 overflow-y-hidden flex flex-col gap-5;
   }
 }
 
@@ -124,9 +124,9 @@
   --sidebar-border: oklch(0.922 0 0);
   --background: #F8F9FA;
   --primary: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
+  --muted: #ADB5BD;
   --radius: 0.625rem;
-  --foreground: oklch(0.145 0 0);
+  --foreground: #e9ecef;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
