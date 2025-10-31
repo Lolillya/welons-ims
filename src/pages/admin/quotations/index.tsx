@@ -21,17 +21,25 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search } from "lucide-react";
 import { ItemsModal } from "./_components/all-items-modal";
 import { useState } from "react";
+import { PDFPreview } from "./_components/pdf-preview";
 
 const QuotationsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
 
   const handleViewAllItems = () => {
     setIsModalOpen(!isModalOpen);
   };
 
+  const handlePDFPreview = () => {
+    setIsPrintModalOpen(!isPrintModalOpen);
+  };
+
   return (
     <>
       {isModalOpen && <ItemsModal closeModal={handleViewAllItems} />}
+      {isPrintModalOpen && <PDFPreview />}
+
       <section className="main-container">
         <div className="flex justify-between">
           <div className="relative items-center flex w-[36%] z-auto">
@@ -101,7 +109,7 @@ const QuotationsPage = () => {
                   <h3>Details</h3>
                   <div className="flex justify-between items-center gap-5">
                     <Button>Edit</Button>
-                    <Button>Print</Button>
+                    <Button onClick={handlePDFPreview}>Print</Button>
                   </div>
                 </div>
 
