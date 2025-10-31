@@ -38,7 +38,7 @@ const QuotationsPage = () => {
   return (
     <>
       {isModalOpen && <ItemsModal closeModal={handleViewAllItems} />}
-      {isPrintModalOpen && <PDFPreview />}
+      {isPrintModalOpen && <PDFPreview closeModal={handlePDFPreview} />}
 
       <section className="main-container">
         <div className="flex justify-between">

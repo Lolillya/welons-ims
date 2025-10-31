@@ -12,7 +12,11 @@ import {
 import { X } from "lucide-react";
 import { usePDF } from "react-to-pdf";
 
-export const PDFPreview = () => {
+interface PDFPreviewProps {
+  closeModal: () => void;
+}
+
+export const PDFPreview = ({ closeModal }: PDFPreviewProps) => {
   const { toPDF, targetRef } = usePDF({
     filename: "quotation.pdf",
     page: { margin: 5 },
@@ -26,7 +30,7 @@ export const PDFPreview = () => {
       <div className="bg-background flex flex-col w-1/2 h-[80%] p-10 gap-5">
         <div className="flex items-center justify-between">
           <Button onClick={handlePrintToPDF}>Print to PDF</Button>
-          <X className="text-primary" />
+          <X className="text-primary" onClick={closeModal} />
         </div>
         <label>Preview</label>
         <div className="w-full h-full bg-white rounded-lg flex flex-col overflow-y-scroll gap-5">
