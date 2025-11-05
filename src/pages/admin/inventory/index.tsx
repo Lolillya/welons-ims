@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type SetStateAction } from "react";
 import {
   Card,
   CardHeader,
@@ -23,8 +23,9 @@ import {
   PaginationPrevious,
   PaginationLink,
   PaginationNext,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type InventoryRow = {
   id: number;
@@ -36,6 +37,7 @@ type InventoryRow = {
 
 import { fetchMaterials, type Material } from "@/core/inventory/materialsApi";
 import { fetchPrefabs } from "@/core/inventory/prefabsApi";
+import { Separator } from "@radix-ui/react-separator";
 
 const InventoryPage = () => {
   const [query, setQuery] = useState("");
@@ -44,8 +46,13 @@ const InventoryPage = () => {
 
   const [materials, setMaterials] = useState<InventoryRow[]>([]);
   const [prefabs, setPrefabs] = useState<InventoryRow[]>([]);
+  const [activeTab, setActiveTab] = useState<"materials" | "prefabs">(
+    "materials"
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  console.log(activeTab);
 
   useEffect(() => {
     let mounted = true;
@@ -132,9 +139,7 @@ const InventoryPage = () => {
           <CardContent>
             <div className="text-2xl font-bold">{totalItems}</div>
           </CardContent>
-          <CardFooter>
-            <Button variant="ghost">Export</Button>
-          </CardFooter>
+          <CardFooter />
         </Card>
 
         <Card>
@@ -170,10 +175,19 @@ const InventoryPage = () => {
 
       <div className="mb-4 flex items-center justify-between">
         <div className="flex gap-5">
-          <Tabs>
-            <TabsList>
-              <TabsTrigger value="prefabs">Prefabs</TabsTrigger>
-              <TabsTrigger value="items">Items</TabsTrigger>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) =>
+              setActiveTab(v as SetStateAction<"materials" | "prefabs">)
+            }
+          >
+            <TabsList className="bg-foreground rounded-full gap-2 py-6 px-1">
+              <TabsTrigger className="rounded-full p-5" value="prefabs">
+                Prefabs
+              </TabsTrigger>
+              <TabsTrigger className="rounded-full p-5" value="materials">
+                Materials
+              </TabsTrigger>
             </TabsList>
           </Tabs>
           <div className="flex items-center gap-3">
@@ -292,6 +306,176 @@ const InventoryPage = () => {
           </Pagination>
         </div>
       </div> */}
+
+      <div className="flex gap-5 h-full">
+        <div className="flex flex-col w-full justify-between">
+          <div className="flex flex-col gap-5">
+            {activeTab === "materials" &&
+              materials.map((m) => (
+                <div className="bg-white p-4 rounded-full" key={m.id}>
+                  <span>{m.sku}</span>
+                  <span className="ml-10">{m.name}</span>
+                </div>
+              ))}
+
+            {activeTab === "prefabs" &&
+              prefabs.map((p) => (
+                <div className="bg-white p-4 rounded-full" key={p.id}>
+                  <span>{p.sku}</span>
+                  <span className="ml-10">{p.name}</span>
+                </div>
+              ))}
+          </div>
+          {/* {Array.from({ length: 10 }).map((_, i) => (
+            <div className="bg-white p-4 rounded-full" key={i}>
+              <span>Quotation No. {i + 1}</span>
+              <span className="ml-10">Quotation Name {i + 1}</span>
+            </div>
+          ))} */}
+
+          <div className="flex gap-5 items-center">
+            <Pagination className=" justify-start">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious href="#" />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">1</PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#" isActive>
+                    2
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">3</PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext href="#" />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+            <label className="w-full">showing 1 - 10 of #</label>
+          </div>
+        </div>
+
+        <div className="flex flex-col w-full">
+          <div className="w-full bg-white rounded-lg shadow-lg flex-1 p-10 flex flex-col justify-between">
+            <div className="flex  justify-between">
+              <h3>Details</h3>
+              <div className="flex justify-between items-center gap-5">
+                <Button>Edit</Button>
+                <Button>Print</Button>
+              </div>
+            </div>
+
+            <Separator color="" />
+
+            <div className="flex flex-col">
+              <h3>Quote Information</h3>
+              <div className="grid grid-cols-2 grid-rows-2">
+                <span>Quotation Name: </span>
+                <span>Quotation Number: </span>
+                <span>Date: </span>
+                <span>Vait Until: </span>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="flex flex-col">
+              <h3>Quote Contact</h3>
+              <div className="grid grid-rows-3 grid-cols-2">
+                <span>Attention To: </span>
+                <span>Phone: </span>
+                <span>Project Details: </span>
+                <span>Email: </span>
+                <span></span>
+                <span>Site Location: </span>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="flex flex-col">
+              <div className="flex justify-between">
+                <h3>Purchasing Information</h3>
+                <Button>View All</Button>
+              </div>
+              <div className="flex flex-col">
+                <Table className="text-primary">
+                  <TableHeader>
+                    <TableRow>
+                      <TableCell>Item</TableCell>
+                      <TableCell>Unit</TableCell>
+                      <TableCell>QTY.</TableCell>
+                      <TableCell>Unit Cost</TableCell>
+                      <TableCell>Total Amount</TableCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>99</TableCell>
+                      <TableCell>Set</TableCell>
+                      <TableCell>99</TableCell>
+                      <TableCell>P 0000.00</TableCell>
+                      <TableCell>P 0000.00</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+
+                <h4>Other Works (Optional)</h4>
+                <Table className="text-primary">
+                  <TableHeader>
+                    <TableRow>
+                      <TableCell>Item</TableCell>
+                      <TableCell>Unit</TableCell>
+                      <TableCell>QTY.</TableCell>
+                      <TableCell>Unit Cost</TableCell>
+                      <TableCell>Total Amount</TableCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>99</TableCell>
+                      <TableCell>Set</TableCell>
+                      <TableCell>99</TableCell>
+                      <TableCell>P 0000.00</TableCell>
+                      <TableCell>P 0000.00</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            <Separator />
+            <div className="flex flex-col">
+              <div className="flex justify-between items-center">
+                <h3>Total Other Works</h3>
+                <span>P 0000.00</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <h3>Overhead Contingency & Mobilization</h3>
+                <span>P 0000.00</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <h3>Delivery Fee</h3>
+                <span>P 0000.00</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <h3>Grand Total</h3>
+                <span>P 0000.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   );
 };
