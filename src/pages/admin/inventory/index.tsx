@@ -35,13 +35,15 @@ type InventoryRow = {
 };
 
 import { fetchMaterials, type Material } from "@/core/inventory/materialsApi";
+import { fetchPrefabs } from "@/core/inventory/prefabsApi";
 
 const InventoryPage = () => {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const [rows, setRows] = useState<InventoryRow[]>([]);
+  const [materials, setMaterials] = useState<InventoryRow[]>([]);
+  const [prefabs, setPrefabs] = useState<InventoryRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +67,7 @@ const InventoryPage = () => {
               ? (m as any).reorder_level
               : 0,
         }));
-        setRows(mapped);
+        setMaterials(mapped);
       })
       .catch((err: any) => {
         if (!mounted) return;
@@ -77,18 +79,38 @@ const InventoryPage = () => {
         setLoading(false);
       });
 
+    // fetch prefabs in parallel and map into InventoryRow shape for now
+    fetchPrefabs()
+      .then((data: any[]) => {
+        if (!mounted) return;
+        console.log("Fetched prefabs:", data);
+        const mapped = data.map((p) => ({
+          id: p.id,
+          sku: p.name ? String(p.name) : `prefab-${p.id}`,
+          name: p.name || "",
+          stock:
+            typeof p.available_quantity === "number" ? p.available_quantity : 0,
+          reorderLevel: 0,
+        }));
+        setPrefabs(mapped);
+      })
+      .catch((err: any) => {
+        if (!mounted) return;
+        console.error("Fetch prefabs error:", err);
+      });
+
     return () => {
       mounted = false;
     };
   }, []);
 
   const filtered = useMemo(() => {
-    if (!query) return rows;
+    if (!query) return materials;
     const q = query.toLowerCase();
-    return rows.filter(
+    return materials.filter(
       (r) => r.sku.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)
     );
-  }, [rows, query]);
+  }, [materials, query]);
 
   const totalItems = filtered.length;
   const inStock = filtered.filter((r) => r.stock > r.reorderLevel).length;
