@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Card,
   CardHeader,
@@ -34,25 +34,52 @@ type InventoryRow = {
   reorderLevel: number;
 };
 
+import { fetchMaterials, type Material } from "@/core/inventory/materialsApi";
+
 const InventoryPage = () => {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const rows: InventoryRow[] = useMemo(() => {
-    return Array.from({ length: 50 }).map((_, i) => {
-      const stock = Math.max(
-        0,
-        Math.round(50 + Math.sin(i / 3) * 20 - (i % 7))
-      );
-      return {
-        id: i + 1,
-        sku: `unit-${1000 + i}`,
-        name: `Product ${i + 1}`,
-        stock,
-        reorderLevel: 8 + (i % 5),
-      };
-    });
+  const [rows, setRows] = useState<InventoryRow[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError(null);
+    fetchMaterials()
+      .then((data: Material[]) => {
+        if (!mounted) return;
+        console.log("Fetched materials:", data);
+        const mapped: InventoryRow[] = data.map((m) => ({
+          id: m.id,
+          sku: m.sku || `unit-${m.id}`,
+          name: m.name || "",
+          stock: typeof m.stock === "number" ? m.stock : 0,
+          reorderLevel:
+            typeof m.reorderLevel === "number"
+              ? m.reorderLevel
+              : typeof m.reorder_level === "number"
+              ? (m as any).reorder_level
+              : 0,
+        }));
+        setRows(mapped);
+      })
+      .catch((err: any) => {
+        if (!mounted) return;
+        setError(err?.message ?? String(err));
+        console.error("Fetch error:", err);
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const filtered = useMemo(() => {
@@ -153,7 +180,7 @@ const InventoryPage = () => {
         </div>
       </div>
 
-      <div className="rounded-lg shadow bg-sidebar-primary">
+      {/* <div className="rounded-lg shadow bg-sidebar-primary">
         <Table className="rounded-lg">
           <TableHeader className="bg-[#DEE2E6]">
             <TableRow>
@@ -165,23 +192,37 @@ const InventoryPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pageRows.map((r) => {
-              const status =
-                r.stock === 0
-                  ? "Out of stock"
-                  : r.stock <= r.reorderLevel
-                  ? "Low stock"
-                  : "In stock";
-              return (
-                <TableRow key={r.id}>
-                  <TableCell>{r.sku}</TableCell>
-                  <TableCell>{r.name}</TableCell>
-                  <TableCell>{r.stock}</TableCell>
-                  <TableCell>{r.reorderLevel}</TableCell>
-                  <TableCell>{status}</TableCell>
-                </TableRow>
-              );
-            })}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5}>Loading materials...</TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={5}>Error: {error}</TableCell>
+              </TableRow>
+            ) : pageRows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5}>No materials found.</TableCell>
+              </TableRow>
+            ) : (
+              pageRows.map((r) => {
+                const status =
+                  r.stock === 0
+                    ? "Out of stock"
+                    : r.stock <= r.reorderLevel
+                    ? "Low stock"
+                    : "In stock";
+                return (
+                  <TableRow key={r.id}>
+                    <TableCell>{r.sku}</TableCell>
+                    <TableCell>{r.name}</TableCell>
+                    <TableCell>{r.stock}</TableCell>
+                    <TableCell>{r.reorderLevel}</TableCell>
+                    <TableCell>{status}</TableCell>
+                  </TableRow>
+                );
+              })
+            )}
           </TableBody>
         </Table>
 
@@ -228,7 +269,7 @@ const InventoryPage = () => {
             </PaginationContent>
           </Pagination>
         </div>
-      </div>
+      </div> */}
     </section>
   );
 };

@@ -29,7 +29,7 @@ export const Sidebar = () => {
       icon: <Warehouse />,
     },
     {
-      key: "purchase_order",
+      key: "purchase order",
       link: links.PURCHASE_ORDERS,
       icon: <ListOrdered />,
     },
@@ -53,38 +53,13 @@ export const Sidebar = () => {
         </div>
 
         <div className="flex flex-col sidebar-text">
-          {/* <label>Invenetory</label> */}
           <ul>
-            {SidebarItems.map((s, i) => (
-              <li onClick={() => navigate(s.link)}>
+            {SidebarItems.map((s) => (
+              <li onClick={() => navigate(s.link)} key={s.key}>
                 {s.icon}
                 <span>{s.key}</span>
               </li>
             ))}
-            {/* <li>
-              <LayoutDashboard />
-              <span>Dashboard</span>
-            </li>
-            <li>
-              <NotebookTabs />
-              <span>Quotations</span>
-            </li>
-            <li>
-              <Warehouse />
-              <span>Inventory</span>
-            </li>
-            <li>
-              <ListOrdered />
-              <span>Purchase Orders</span>
-            </li>
-            <li>
-              <SquareKanban />
-              <span>Projects</span>
-            </li>
-            <li>
-              <Truck />
-              <span>Dispatch</span>
-            </li> */}
           </ul>
         </div>
       </aside>
