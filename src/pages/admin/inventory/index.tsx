@@ -122,12 +122,33 @@ const InventoryPage = () => {
     );
   }, [prefabs, query]);
 
-  const totalItems = filtered.length;
-  const inStock = filtered.filter((m) => (m.quantity ?? 0) > 0).length;
-  const lowStock = filtered.filter(
+  // Materials counts
+  const materialTotal = filtered.length;
+  const materialInStock = filtered.filter((m) => (m.quantity ?? 0) > 5).length;
+  const materialLowStock = filtered.filter(
     (m) => (m.quantity ?? 0) > 0 && (m.quantity ?? 0) <= 5
   ).length;
-  const outOfStock = filtered.filter((m) => (m.quantity ?? 0) === 0).length;
+  const materialOutOfStock = filtered.filter(
+    (m) => (m.quantity ?? 0) === 0
+  ).length;
+
+  // Prefabs counts
+  const prefabTotal = filteredPrefabs.length;
+  const prefabInStock = filteredPrefabs.filter(
+    (p) => (p.available_quantity ?? 0) > 5
+  ).length;
+  const prefabLowStock = filteredPrefabs.filter(
+    (p) => (p.available_quantity ?? 0) > 0 && (p.available_quantity ?? 0) <= 5
+  ).length;
+  const prefabOutOfStock = filteredPrefabs.filter(
+    (p) => (p.available_quantity ?? 0) === 0
+  ).length;
+
+  // Combined counts for the top cards
+  const totalItems = materialTotal + prefabTotal;
+  const inStock = materialInStock + prefabInStock;
+  const lowStock = materialLowStock + prefabLowStock;
+  const outOfStock = materialOutOfStock + prefabOutOfStock;
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
