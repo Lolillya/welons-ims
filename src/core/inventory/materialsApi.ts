@@ -2,18 +2,17 @@ import axios from "axios";
 
 export type Material = {
   id: number;
-  sku: string;
   name: string;
-  stock: number;
-  // backend might use snake_case; we accept either
-  reorder_level?: number;
-  reorderLevel?: number;
+  category?: string;
+  color?: string;
+  desc?: string | null;
+  quantity: number;
+  remarks?: string | null;
+  specs?: string;
+  srp?: string;
+  unit?: string;
 };
 
-// When developing with Vite we want to use the dev server proxy
-// so requests are same-origin and avoid CORS errors. If an explicit
-// VITE_API_BASE_URL is provided, use it; otherwise use a relative
-// `/api` path which Vite will proxy to the backend.
 const ENV_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
 export async function fetchMaterials(): Promise<Material[]> {

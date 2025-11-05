@@ -27,12 +27,16 @@ import {
 } from "@/components/ui/pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type InventoryRow = {
+// InventoryRow removed — we render raw Material objects now
+
+type Prefab = {
+  available_quantity: number;
+  color: string;
+  desc: string | null;
   id: number;
-  sku: string;
   name: string;
-  stock: number;
-  reorderLevel: number;
+  specs: string;
+  srp: string;
 };
 
 import { fetchMaterials, type Material } from "@/core/inventory/materialsApi";
@@ -44,8 +48,9 @@ const InventoryPage = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const [materials, setMaterials] = useState<InventoryRow[]>([]);
-  const [prefabs, setPrefabs] = useState<InventoryRow[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [prefabs, setPrefabs] = useState<Prefab[]>([]);
+  const [prefabPage, setPrefabPage] = useState(1);
   const [activeTab, setActiveTab] = useState<"materials" | "prefabs">(
     "materials"
   );
@@ -62,19 +67,8 @@ const InventoryPage = () => {
       .then((data: Material[]) => {
         if (!mounted) return;
         console.log("Fetched materials:", data);
-        const mapped: InventoryRow[] = data.map((m) => ({
-          id: m.id,
-          sku: m.sku || `unit-${m.id}`,
-          name: m.name || "",
-          stock: typeof m.stock === "number" ? m.stock : 0,
-          reorderLevel:
-            typeof m.reorderLevel === "number"
-              ? m.reorderLevel
-              : typeof m.reorder_level === "number"
-              ? (m as any).reorder_level
-              : 0,
-        }));
-        setMaterials(mapped);
+        // store raw material objects so we can render all fields
+        setMaterials(data);
       })
       .catch((err: any) => {
         if (!mounted) return;
@@ -86,20 +80,12 @@ const InventoryPage = () => {
         setLoading(false);
       });
 
-    // fetch prefabs in parallel and map into InventoryRow shape for now
+    // fetch prefabs in parallel (store raw prefab objects so we can render their fields)
     fetchPrefabs()
-      .then((data: any[]) => {
+      .then((data: Prefab[]) => {
         if (!mounted) return;
         console.log("Fetched prefabs:", data);
-        const mapped = data.map((p) => ({
-          id: p.id,
-          sku: p.name ? String(p.name) : `prefab-${p.id}`,
-          name: p.name || "",
-          stock:
-            typeof p.available_quantity === "number" ? p.available_quantity : 0,
-          reorderLevel: 0,
-        }));
-        setPrefabs(mapped);
+        setPrefabs(data);
       })
       .catch((err: any) => {
         if (!mounted) return;
@@ -114,20 +100,46 @@ const InventoryPage = () => {
   const filtered = useMemo(() => {
     if (!query) return materials;
     const q = query.toLowerCase();
-    return materials.filter(
-      (r) => r.sku.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)
-    );
+    return materials.filter((m) => {
+      return (
+        (m.name || "").toLowerCase().includes(q) ||
+        (m.specs || "").toLowerCase().includes(q) ||
+        (m.category || "").toLowerCase().includes(q) ||
+        (m.remarks || "").toLowerCase().includes(q) ||
+        (m.unit || "").toLowerCase().includes(q)
+      );
+    });
   }, [materials, query]);
 
+  const filteredPrefabs = useMemo(() => {
+    if (!query) return prefabs;
+    const q = query.toLowerCase();
+    return prefabs.filter(
+      (p) =>
+        (p.name || "").toLowerCase().includes(q) ||
+        (p.specs || "").toLowerCase().includes(q) ||
+        (p.desc || "")?.toString().toLowerCase().includes(q)
+    );
+  }, [prefabs, query]);
+
   const totalItems = filtered.length;
-  const inStock = filtered.filter((r) => r.stock > r.reorderLevel).length;
+  const inStock = filtered.filter((m) => (m.quantity ?? 0) > 0).length;
   const lowStock = filtered.filter(
-    (r) => r.stock > 0 && r.stock <= r.reorderLevel
+    (m) => (m.quantity ?? 0) > 0 && (m.quantity ?? 0) <= 5
   ).length;
-  const outOfStock = filtered.filter((r) => r.stock === 0).length;
+  const outOfStock = filtered.filter((m) => (m.quantity ?? 0) === 0).length;
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const prefabPageCount = Math.max(
+    1,
+    Math.ceil(filteredPrefabs.length / pageSize)
+  );
+  const prefabPageRows = filteredPrefabs.slice(
+    (prefabPage - 1) * pageSize,
+    prefabPage * pageSize
+  );
 
   return (
     <section className="main-container">
@@ -216,98 +228,215 @@ const InventoryPage = () => {
         </div>
       </div>
 
-      {/* <div className="rounded-lg shadow bg-sidebar-primary">
-        <Table className="rounded-lg">
-          <TableHeader className="bg-[#DEE2E6]">
-            <TableRow>
-              <TableHead>Units</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Reorder Level</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={5}>Loading materials...</TableCell>
-              </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={5}>Error: {error}</TableCell>
-              </TableRow>
-            ) : pageRows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5}>No materials found.</TableCell>
-              </TableRow>
-            ) : (
-              pageRows.map((r) => {
-                const status =
-                  r.stock === 0
-                    ? "Out of stock"
-                    : r.stock <= r.reorderLevel
-                    ? "Low stock"
-                    : "In stock";
-                return (
-                  <TableRow key={r.id}>
-                    <TableCell>{r.sku}</TableCell>
-                    <TableCell>{r.name}</TableCell>
-                    <TableCell>{r.stock}</TableCell>
-                    <TableCell>{r.reorderLevel}</TableCell>
-                    <TableCell>{status}</TableCell>
+      <div className="rounded-lg shadow bg-sidebar-primary flex flex-col justify-between flex-1">
+        {activeTab === "materials" && (
+          <>
+            <Table className="rounded-lg h-full">
+              <TableHeader className="bg-[#DEE2E6]">
+                <TableRow>
+                  <TableHead>Units</TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Specs</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Remarks</TableHead>
+                  <TableHead>SRP</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={9}>Loading materials...</TableCell>
                   </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={9}>Error: {error}</TableCell>
+                  </TableRow>
+                ) : pageRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9}>No materials found.</TableCell>
+                  </TableRow>
+                ) : (
+                  pageRows.map((m) => {
+                    const qty =
+                      typeof m.quantity === "number"
+                        ? m.quantity
+                        : parseInt(String(m.quantity || 0), 10) || 0;
+                    const status =
+                      qty === 0
+                        ? "Out of stock"
+                        : qty <= 5
+                        ? "Low stock"
+                        : "In stock";
+                    return (
+                      <TableRow key={m.id}>
+                        <TableCell>
+                          {m.unit ? `${m.unit}-${m.id}` : m.id}
+                        </TableCell>
+                        <TableCell>{m.name}</TableCell>
+                        <TableCell>{m.category ?? "-"}</TableCell>
+                        <TableCell>{m.specs ?? "-"}</TableCell>
+                        <TableCell>{m.unit ?? "-"}</TableCell>
+                        <TableCell>{qty}</TableCell>
+                        <TableCell>{m.remarks ?? "-"}</TableCell>
+                        <TableCell>{m.srp ?? "-"}</TableCell>
+                        <TableCell>{status}</TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+            <div className="flex w-full justify-between items-center p-3">
+              <div>
+                <span className="text-sm">
+                  Showing {(page - 1) * pageSize + 1} -{" "}
+                  {Math.min(page * pageSize, filtered.length)} of{" "}
+                  {filtered.length}
+                </span>
+              </div>
+              <Pagination className="w-fit m-0">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e: any) => {
+                        e.preventDefault();
+                        setPage((p) => Math.max(1, p - 1));
+                      }}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: pageCount }).map((_, i) => (
+                    <PaginationItem key={i}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e: any) => {
+                          e.preventDefault();
+                          setPage(i + 1);
+                        }}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e: any) => {
+                        e.preventDefault();
+                        setPage((p) => Math.min(pageCount, p + 1));
+                      }}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </>
+        )}
 
-        <div className="flex w-full justify-between items-center p-3">
-          <div>
-            <span className="text-sm">
-              Showing {(page - 1) * pageSize + 1} -{" "}
-              {Math.min(page * pageSize, filtered.length)} of {filtered.length}
-            </span>
-          </div>
-          <Pagination className="w-fit m-0">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e: any) => {
-                    e.preventDefault();
-                    setPage((p) => Math.max(1, p - 1));
-                  }}
-                />
-              </PaginationItem>
-              {Array.from({ length: pageCount }).map((_, i) => (
-                <PaginationItem key={i}>
-                  <PaginationLink
-                    href="#"
-                    onClick={(e: any) => {
-                      e.preventDefault();
-                      setPage(i + 1);
-                    }}
-                  >
-                    {i + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e: any) => {
-                    e.preventDefault();
-                    setPage((p) => Math.min(pageCount, p + 1));
-                  }}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      </div> */}
+        {activeTab === "prefabs" && (
+          <>
+            <Table className="rounded-lg h-full">
+              <TableHeader className="bg-[#DEE2E6]">
+                <TableRow>
+                  <TableHead>Units</TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Color</TableHead>
+                  <TableHead>Specs</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Reorder Level</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5}>Loading prefabs...</TableCell>
+                  </TableRow>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={5}>Error: {error}</TableCell>
+                  </TableRow>
+                ) : prefabPageRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5}>No prefabs found.</TableCell>
+                  </TableRow>
+                ) : (
+                  prefabPageRows.map((p) => {
+                    const status =
+                      p.available_quantity === 0
+                        ? "Out of stock"
+                        : p.available_quantity <= 0
+                        ? "Low stock"
+                        : "In stock";
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell>{p.id}</TableCell>
+                        <TableCell>{p.name}</TableCell>
+                        <TableCell>{p.desc ?? "-"}</TableCell>
+                        <TableCell>{p.color}</TableCell>
+                        <TableCell>{p.specs}</TableCell>
+                        <TableCell>{p.available_quantity}</TableCell>
+                        <TableCell>{p.srp}</TableCell>
+                        <TableCell>{status}</TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+            <div className="flex w-full justify-between items-center p-3">
+              <div>
+                <span className="text-sm">
+                  Showing {(prefabPage - 1) * pageSize + 1} -{" "}
+                  {Math.min(prefabPage * pageSize, filteredPrefabs.length)} of{" "}
+                  {filteredPrefabs.length}
+                </span>
+              </div>
+              <Pagination className="w-fit m-0">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e: any) => {
+                        e.preventDefault();
+                        setPrefabPage((p) => Math.max(1, p - 1));
+                      }}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: prefabPageCount }).map((_, i) => (
+                    <PaginationItem key={i}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e: any) => {
+                          e.preventDefault();
+                          setPrefabPage(i + 1);
+                        }}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e: any) => {
+                        e.preventDefault();
+                        setPrefabPage((p) => Math.min(prefabPageCount, p + 1));
+                      }}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </>
+        )}
+      </div>
 
-      <div className="flex gap-5 h-full">
+      {/* <div className="flex gap-5 h-full">
         <div className="flex flex-col w-full justify-between">
           <div className="flex flex-col gap-5">
             {activeTab === "materials" &&
@@ -326,12 +455,6 @@ const InventoryPage = () => {
                 </div>
               ))}
           </div>
-          {/* {Array.from({ length: 10 }).map((_, i) => (
-            <div className="bg-white p-4 rounded-full" key={i}>
-              <span>Quotation No. {i + 1}</span>
-              <span className="ml-10">Quotation Name {i + 1}</span>
-            </div>
-          ))} */}
 
           <div className="flex gap-5 items-center">
             <Pagination className=" justify-start">
@@ -475,7 +598,7 @@ const InventoryPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </section>
   );
 };
