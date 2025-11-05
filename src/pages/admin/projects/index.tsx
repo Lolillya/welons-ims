@@ -145,7 +145,7 @@ const ProjectsPage = () => {
         </div>
       </div>
 
-      <div className="rounded-lg shadow bg-sidebar-primary">
+      <div className="rounded-lg shadow bg-sidebar-primary flex-1 flex flex-col justify-between">
         <Table className="rounded-lg">
           <TableHeader className="bg-[#DEE2E6]">
             <TableRow>
